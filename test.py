@@ -61,10 +61,10 @@ def normalize_face(cv2_img):
 
     # Compute the transformation matrix
     rot_mat = cv2.getRotationMatrix2D((cx, cy), angle, scale)
-    trans_x = desired_face_width * 0.5 - cx * scale  #
-    trans_y = desired_face_height * desired_left_eye[1] - cy * scale  #
-    # rot_mat[0, 2] += trans_x
-    # rot_mat[1, 2] += trans_y
+    trans_x = desired_face_width * 0.5 - cx
+    trans_y = desired_face_height * desired_left_eye[1] - cy
+    rot_mat[0, 2] += trans_x
+    rot_mat[1, 2] += trans_y
 
     # Apply the transformation to the input image
     output = cv2.warpAffine(cv2_img, rot_mat, (desired_face_width, desired_face_height))
@@ -129,7 +129,7 @@ def main():
         _, frame = cam.read()
         cv2.imshow("frame", frame)
 
-        align_face(frame)
+        normalize_face(frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

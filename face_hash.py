@@ -6,16 +6,17 @@ import time
 class FaceMeshDetector():
     """this class is for creating an object that can mesh faces in an image"""
 
-    def __init__(self, static_mode=False, max_faces: int = 2, min_detection_con: int = 0.5, min_traking_con: int = 5):
+    def __init__(self, static_mode=False, max_faces: int = 2, min_detection_con: float = 0.5,
+                 min_tracking_con: float = 0.5):
         self.static_mode = static_mode
         self.max_faces = max_faces
-        self.min_tracking_con = min_traking_con
+        self.min_tracking_con = min_tracking_con
         self.min_detection_con = min_detection_con
 
         self.mp_draw = mp.solutions.drawing_utils
         self.mp_face_mesh = mp.solutions.face_mesh
         self.face_mesh = self.mp_face_mesh.FaceMesh(static_image_mode=self.static_mode, max_num_faces=self.max_faces,
-                                                    min_tracking_confidence=self.min_traking_con,
+                                                    min_tracking_confidence=self.min_tracking_con,
                                                     min_detection_confidence=self.min_detection_con)
         self.draw_spec = self.mp_draw.DrawingSpec(thickness=1, circle_radius=2)
 
@@ -50,7 +51,7 @@ class FaceMeshDetector():
 
 def main():
     cap = cv2.VideoCapture(0)
-    detector = FaceMeshDetector(min_detection_con=0.7, maxfacese=3)
+    detector = FaceMeshDetector()
 
     ptime = time.time()
 
@@ -63,7 +64,7 @@ def main():
         ptime = ctime
         cv2.putText(img, f"FPS: {int(fps)}", (20, 70), cv2.FONT_HERSHEY_PLAIN,
                     3, (255, 0, 0), 3)
-
+        print(len(faces))
         cv2.imshow("frame", img)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

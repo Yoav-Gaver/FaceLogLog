@@ -7,13 +7,13 @@ import matplotlib.pyplot as plt
 haarcascade_url = "https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_alt2.xml"
 
 # save face detection algorithm's name as haarcascade
-haarcascade = "haarcascade_frontalface_alt2.xml"
+haarcascade = "models/opencv/haarcascade_frontalface_alt2.xml"
 
 # save facial landmark detection model's url in LBFmodel_url variable
 LBFmodel_url = "https://github.com/kurnianggoro/GSOC2017/raw/master/data/lbfmodel.yaml"
 
 # save facial landmark detection model's name as LBFmodel
-LBFmodel = "lbfmodel.yaml"
+LBFmodel = "models/opencv/lbfmodel.yaml"
 
 
 def initiate():

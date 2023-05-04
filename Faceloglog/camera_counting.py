@@ -6,6 +6,8 @@ import numpy as np
 from face_hash import FaceHasher
 from hash_functions import LogLog
 import time
+import logging
+import msvcrt
 
 # save face detection algorithm's url in haarcascade_url variable
 haarcascade_url = "https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_alt2.xml"
@@ -18,7 +20,9 @@ LBFmodel_url = "https://github.com/kurnianggoro/GSOC2017/raw/master/data/lbfmode
 
 # save facial landmark detection model's name as LBFmodel
 LBFmodel = "models/opencv/lbfmodel.yaml"
-FLAGS = ["--q", "-quiet", "--c", "-camera", "--h", "-help"]
+
+# Flags for the program
+FLAGS = ["-q", "--quiet", "-c", "--camera", "-h", "--help", "-d", "--debug"]
 
 
 def initiate():
@@ -40,8 +44,17 @@ def initiate():
 
 
 class FaceCounter:
-    def __init__(self, lg_num_buckets: int = 5, model: str = "models/opencv/haarcascade_frontalface_alt2.xml",
-                 face_size: tuple[int] = (256, 256), show_images: bool = False):
+    def __init__(self, lg_num_buckets=5, model="models/opencv/haarcascade_frontalface_alt2.xml",
+                 face_size=(256, 256), show_images=False):
+        """
+        creates a face counter object
+
+        Args:
+            lg_num_buckets (int): the lg of the buckets that keep count(buckets = 2^lg_num_buckets)
+            model (str): the path of the desired face detection algorithm
+            face_size (tuple[int]): the size that the face will be stretched and cut to
+            show_images (bool): helps to identify problems in the model
+        """
         self.lg_num_bucket = lg_num_buckets
         self.model = model
         self.face_size = face_size
@@ -49,7 +62,16 @@ class FaceCounter:
         self.loglog = LogLog(lg_num_buckets=self.lg_num_bucket)
         self.face_vectorizer = FaceHasher(model=model, face_size=face_size, show_images=show_images)
 
-    def get_bucket_ind(self, vector: np.ndarray):
+    def get_bucket_ind(self, vector):
+        """
+        return the bucket the vector belongs to
+
+        Args:
+             vector (np.ndarray): the vector
+
+         Returns:
+             the index of the bucket
+        """
         bin_bucket = vector[-self.lg_num_bucket:]
 
         bucket_ind = 0
@@ -58,17 +80,25 @@ class FaceCounter:
 
         return bucket_ind
 
-    def add_faces(self, frame: np.ndarray):
+    def add_faces(self, frame):
+        """
+        adds all the faces to the buckets they are supposed to be in
+
+        Args:
+            frame (np.ndarray): the frame with the faces
+        """
         vectors = self.face_vectorizer.get_faces_vectors(frame=frame)
 
         for ind, v in enumerate(vectors):
-            zeros = FaceHasher.leading_zeros(v, self.lg_num_bucket)
-            bucket_ind = self.get_bucket_ind(v)
-            print(f"face number {ind}: {v}")
-            print(f"zeros: {zeros}, to bucket: {bucket_ind}")
-
-            self.loglog.add_by_zeros(zeros=zeros, bucket_ind=bucket_ind)
+            self.add_vector(ind, v)
         return vectors
+
+    def add_vector(self, ind, v):
+        zeros = FaceHasher.leading_zeros(v, self.lg_num_bucket)
+        bucket_ind = self.get_bucket_ind(v)
+        print(f"face number {ind}: {v}")
+        print(f"zeros: {zeros}, to bucket: {bucket_ind}")
+        self.loglog.add_by_zeros(zeros=zeros, bucket_ind=bucket_ind)
 
     def estimate(self, correction_m: int = 1, use_hyper: bool = False):
         if use_hyper:
@@ -89,12 +119,14 @@ def main(args: list):
 
     if use_camera:
         cam = cv2.VideoCapture(0)
-        while True:
+        while msvcrt.kbhit() and msvcrt.getch() == b"q":
             _, frame = cam.read()
 
             if frame is None:
                 print("image empty check source")
                 break
+        # After the loop release the cap object
+        cam.release()
     else:
         dir_path = input("what path is the images in?")
         for path in os.listdir(dir_path):
@@ -106,8 +138,7 @@ def main(args: list):
                 break
 
     print(f"buckets:{counter.loglog}\nestimated face seen: {counter.estimate()}")
-    # After the loop release the cap object
-    # cam.release()
+
 
 
 def process_frame(counter, frame, show_images):
@@ -120,7 +151,7 @@ def process_frame(counter, frame, show_images):
         ctime = time.time()
         fps = 1 / (ctime - ptime)
 
-        cv2.putText(frame, f"FPS: {fps:,.2f}", (20, 70), cv2.FONT_HERSHEY_PLAIN,
+        cv2.putText(frame, f"FPS: {fps:,.f}", (20, 70), cv2.FONT_HERSHEY_PLAIN,
                     3, (255, 0, 0), 3)
 
         cv2.imshow("frame", frame)
@@ -131,27 +162,30 @@ def usage():
           "It uses the Hyperloglog algorithm and a face vectorization algorithm to"
           "count them.\n\n"
           "You can use this flags:"
-          "use '--q' or '-quiet' to hide the frames. \n"
-          "use '--c' or '-camera' to use camera instead.\n"
-          "use '--h' or '-help' to get all commands again.")
+          "use '-q' or '--quiet' to hide the frames. \n"
+          "use '-c' or '--camera' to use camera instead.\n"
+          "use '-d' or '--debug to show more information of the program IRT.\n"
+          "use '-h' or '--help' to get all commands again.")
 
 
 def handle_flags():
     args = sys.argv[1:]
-    show_images, use_camera, output_help = (True, False, False)
+    show_images, use_camera, output_help, debug = (True, False, False, False)
     for flag in args:
         if flag not in FLAGS:
-            print(f"unrecognized flag {flag}")
+            print(f"Unrecognized flag {flag}\n\n")
             return None
 
-        if flag == "--q" or flag == "-quiet":
+        if flag in ["-q", "--quiet"]:
             show_images = False
-        elif flag == "--c" or flag == "--camera":
+        elif flag in ["-c", "--camera"]:
             use_camera = True
-        elif flag == "--h" or flag == "-help":
+        elif flag in ["-h", "--help"]:
             output_help = True
+        elif flag in ["-d", "--debug"]:
+            debug = True
 
-    return show_images, use_camera, output_help
+    return show_images, use_camera, output_help, debug
 
 
 if __name__ == '__main__':
@@ -160,6 +194,8 @@ if __name__ == '__main__':
     # run the program
     flags = handle_flags()
     if flags and not flags[-1]:
+        logging.basicConfig(level=logging.DEBUG if flags[-2] else logging.WARNING,
+                            format="%(levelname)%s %(asctime)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]")
         main(flags[:-1])
     else:
         usage()

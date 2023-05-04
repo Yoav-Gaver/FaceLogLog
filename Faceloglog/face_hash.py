@@ -37,12 +37,10 @@ class FaceHasher:
     def __init__(self, model: str = "models/opencv/haarcascade_frontalface_alt2.xml",
                  face_size: tuple[int] = (256, 256), show_images: bool = False):
         """
-        creates
-        :param model:
-        :param face_size:
+        creates the face hasher objects
+        :param model: the path to the model to be used
+        :param face_size: the size the face will be cut to
         :param show_images: whether to show the image
-
-        :return:
         """
         # Load the face detector
         self.face_cascade = cv2.CascadeClassifier(model)

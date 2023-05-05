@@ -3,9 +3,8 @@ import os
 import cv2
 import urllib.request as urlreq
 import numpy as np
-from face_hash import FaceHasher
-from hash_functions import LogLog
-import time
+from Faceloglog.face_hash import FaceHasher
+from Faceloglog.hash_functions import LogLog
 import logging
 import msvcrt
 
@@ -90,13 +89,14 @@ class FaceCounter:
         vectors = self.face_vectorizer.get_faces_vectors(frame=frame)
 
         for ind, v in enumerate(vectors):
-            self.add_vector(ind, v)
+            self.add_vector(v, ind)
         return vectors
 
-    def add_vector(self, ind, v):
+    def add_vector(self, v, ind=None):
         zeros = FaceHasher.leading_zeros(v, self.lg_num_bucket)
         bucket_ind = self.get_bucket_ind(v)
-        print(f"face number {ind}: {v}")
+        if ind:
+            print(f"face number {ind}: {v}")
         print(f"zeros: {zeros}, to bucket: {bucket_ind}")
         self.loglog.add_by_zeros(zeros=zeros, bucket_ind=bucket_ind)
 
@@ -119,11 +119,16 @@ def main(args: list):
 
     if use_camera:
         cam = cv2.VideoCapture(0)
-        while msvcrt.kbhit() and msvcrt.getch() == b"q":
+        while not msvcrt.kbhit() or msvcrt.getch() != b'q':
             _, frame = cam.read()
+
+            process_frame(counter, frame, show_images)
 
             if frame is None:
                 print("image empty check source")
+                break
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('q'):
                 break
         # After the loop release the cap object
         cam.release()
@@ -140,19 +145,18 @@ def main(args: list):
     print(f"buckets:{counter.loglog}\nestimated face seen: {counter.estimate()}")
 
 
-
 def process_frame(counter, frame, show_images):
-    ptime = time.time()
+    # ptime = time.time()
 
     counter.add_faces(frame=frame)
 
     if show_images:
         # add fps to image
-        ctime = time.time()
-        fps = 1 / (ctime - ptime)
-
-        cv2.putText(frame, f"FPS: {fps:,.f}", (20, 70), cv2.FONT_HERSHEY_PLAIN,
-                    3, (255, 0, 0), 3)
+        # ctime = time.time()
+        # fps = 1 / (ctime - ptime)
+        #
+        # cv2.putText(frame, f"FPS: {fps:,.1f}", (20, 70), cv2.FONT_HERSHEY_PLAIN,
+        #             3, (255, 0, 0), 3)
 
         cv2.imshow("frame", frame)
 
@@ -185,7 +189,7 @@ def handle_flags():
         elif flag in ["-d", "--debug"]:
             debug = True
 
-    return show_images, use_camera, output_help, debug
+    return show_images, use_camera, debug, output_help
 
 
 if __name__ == '__main__':
@@ -196,7 +200,7 @@ if __name__ == '__main__':
     if flags and not flags[-1]:
         logging.basicConfig(level=logging.DEBUG if flags[-2] else logging.WARNING,
                             format="%(levelname)%s %(asctime)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]")
-        main(flags[:-1])
+        main(flags[:2])
     else:
         usage()
     # Destroy all the windows

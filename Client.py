@@ -1,4 +1,4 @@
-import numpy as np
+import sys
 import socket
 from Faceloglog.face_hash import FaceHasher
 import logging
@@ -71,7 +71,10 @@ class Client:
 
 
 def main():
-    client = Client()
+    if len(sys.argv) > 2:
+        client = Client(address=(sys.argv[2], Protocol.PORT))
+    else:
+        client = Client()
     client.run()
 
 

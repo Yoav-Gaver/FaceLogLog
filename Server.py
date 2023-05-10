@@ -26,6 +26,9 @@ class Server:
         """
         self.initiate_server()
 
+        logging.info("Press 'e' to get estimate of how many people were seen by all cameras.\n"
+                     "Hold 'q' to end server program.")
+
         while not msvcrt.kbhit() or msvcrt.getch() != b"q":
             logging.debug("getting data")
             rlist, _, xlist = select.select([self.server_socket] + self.client_sockets, self.client_sockets, [], 1)
@@ -37,6 +40,10 @@ class Server:
                 logging.debug("processing...")
                 self.process_data(data)
 
+            if msvcrt.kbhit() and msvcrt.getch() == b'e':
+                print(f"current estimate of overall people seen is {self.estimate()}")
+
+        print(f"current estimate of overall people seen is {self.estimate()}")
         logging.debug("closing")
         self.server_socket.close()
 
@@ -51,12 +58,15 @@ class Server:
                 if vector is None:
                     try:
                         self.client_sockets.remove(current_socket)
-                    except ValueError as e:
-                        logging.debug(f"Connection already disconnected: {current_socket}\n{e}")
+                    except ValueError:
+                        logging.debug(f"Connection already disconnected: {current_socket}\n")
                 else:
                     data.append(vector)
 
         return data
+
+    def estimate(self):
+        return self.counter.estimate()
 
     def initiate_server(self):
         logging.info("Setting up server...")
@@ -76,11 +86,19 @@ class Server:
 
 
 def main():
-    server = Server()
+    lg_buckets = input("how many buckets would you like there to be in the counter? input in log 2 form")
+    if not lg_buckets.isnumeric():
+        logging.critical("inputted string must be an integer")
+        return
+    server = Server(lg_num_buckets=int(lg_buckets))
     server.run()
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
-                        format="%(levelname)s %(asctime)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]")
+                        format="%(levelname)s %(as"
+                               ""
+                               ""
+                               "ctime)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]",
+                        datefmt="%H:%M:%S")
     main()

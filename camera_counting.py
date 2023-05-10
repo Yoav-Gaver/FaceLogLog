@@ -111,6 +111,8 @@ def main(args: list):
 
     try:
         lg_buckets = input("What would you like the lg of number of buckets to be?(2=>4, 3=>8,...,10=>1024,...)\n")
+        if not use_camera:
+            dir_path = input("what path is the images in?")
     except KeyboardInterrupt:
         print("program ended through user interruption")
         return
@@ -133,7 +135,6 @@ def main(args: list):
         # After the loop release the cap object
         cam.release()
     else:
-        dir_path = input("what path is the images in?")
         for path in os.listdir(dir_path):
             frame = cv2.imread(f"{dir_path}\\{path}")
             process_frame(counter, frame, show_images)

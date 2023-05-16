@@ -26,6 +26,7 @@ class Client:
         self.cam = cv2.VideoCapture(video_capture)
         self.socket: socket.socket | None = None
 
+
     def run(self):
         """run the client and send vectors to server"""
         self.connect_server()
@@ -80,5 +81,6 @@ def main():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
-                        format="%(levelname)s %(asctime)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]")
+                        format="%(levelname)s %(asctimes: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]")
     main()
+

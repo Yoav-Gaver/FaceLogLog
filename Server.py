@@ -96,9 +96,6 @@ def main():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
-                        format="%(levelname)s %(as"
-                               ""
-                               ""
-                               "ctime)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]",
+                        format="%(levelname)s %(asctime)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]",
                         datefmt="%H:%M:%S")
     main()

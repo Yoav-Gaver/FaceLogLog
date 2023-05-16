@@ -20,5 +20,5 @@ For face database [click here](https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wi
 3. run the [Client.py](Client.py) by inputting `python Client.py [address of server computer]` or `python Client.py` if it is on the local computer.
 4. locate the cameras of the clients where people are likely to look.
 
-
-
+#### Option C) you
+create your own! the script is fairly simple and works well. the many classes allow you to create your own objects and interfaces. there are many to implement and improve, so you should try it for yourself.

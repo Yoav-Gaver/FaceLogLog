@@ -1,1 +1,6 @@
 /del.py
+images/10
+__pycache__/camera_counting.cpython-310.pyc
+__pycache__/Protocol.cpython-310.pyc
+Faceloglog/__pycache__/face_hash.cpython-310.pyc
+Faceloglog/__pycache__/hash_functions.cpython-310.pyc

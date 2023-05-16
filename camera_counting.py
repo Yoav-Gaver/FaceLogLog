@@ -1,3 +1,4 @@
+import time
 import sys
 import os
 import cv2
@@ -8,38 +9,39 @@ from Faceloglog.hash_functions import LogLog
 import logging
 import msvcrt
 
+
 # save face detection algorithm's url in haarcascade_url variable
 haarcascade_url = "https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_alt2.xml"
 
 # save face detection algorithm's name as haarcascade
 haarcascade = "models/opencv/haarcascade_frontalface_alt2.xml"
 
-# save facial landmark detection model's url in LBFmodel_url variable
-LBFmodel_url = "https://github.com/kurnianggoro/GSOC2017/raw/master/data/lbfmodel.yaml"
-
-# save facial landmark detection model's name as LBFmodel
-LBFmodel = "models/opencv/lbfmodel.yaml"
+# # save facial landmark detection model's url in LBFmodel_url variable
+# LBFmodel_url = "https://github.com/kurnianggoro/GSOC2017/raw/master/data/lbfmodel.yaml"
+#
+# # save facial landmark detection model's name as LBFmodel
+# LBFmodel = "models/opencv/lbfmodel.yaml"
 
 # Flags for the program
-FLAGS = ["-q", "--quiet", "-c", "--camera", "-h", "--help", "-d", "--debug"]
+FLAGS = ["-q", "--quiet", "-c", "--camera", "-h", "--help", "-d", "--debug", "-i", "--init"]
 
 
 def initiate():
-    # check if file is in working directory
+    # check if file is in needed directory
     if haarcascade in os.listdir(os.curdir):
         print("Haarcascade model exists")
     else:
         # download file from url and save locally as haarcascade_frontalface_alt2.xml, < 1MB
         urlreq.urlretrieve(haarcascade_url, haarcascade)
         print("Haarcascade model downloaded")
-
-    # check if file is in working directory
-    if LBFmodel in os.listdir(os.curdir):
-        print("LBF model exists")
-    else:
-        # download picture from url and save locally as lbfmodel.yaml, < 54MB
-        urlreq.urlretrieve(LBFmodel_url, LBFmodel)
-        print("LBF model downloaded")
+    #
+    # # check if file is in needed directory
+    # if LBFmodel in os.listdir(os.curdir):
+    #     print("LBF model exists")
+    # else:
+    #     # download picture from url and save locally as lbfmodel.yaml, < 54MB
+    #     urlreq.urlretrieve(LBFmodel_url, LBFmodel)
+    #     print("LBF model downloaded")
 
 
 class FaceCounter:
@@ -114,7 +116,7 @@ def main(args: list):
         if not use_camera:
             dir_path = input("what path is the images in?")
     except KeyboardInterrupt:
-        print("program ended through user interruption")
+        logging.critical("program ended through user interruption")
         return
 
     counter = FaceCounter(lg_num_buckets=int(lg_buckets), show_images=show_images)
@@ -127,14 +129,16 @@ def main(args: list):
             process_frame(counter, frame, show_images)
 
             if frame is None:
-                print("image empty check source")
+                logging.critical("image empty check source")
                 break
             key = cv2.waitKey(1) & 0xFF
             if key == ord('q'):
                 break
+            elif key == ord('e'):
+                print(f"buckets:{counter.loglog}\nestimated face seen: {counter.estimate()}")
         # After the loop release the cap object
         cam.release()
-    else:
+    elif dir_path is not None and dir_path is not "":
         for path in os.listdir(dir_path):
             frame = cv2.imread(f"{dir_path}\\{path}")
             process_frame(counter, frame, show_images)
@@ -142,22 +146,24 @@ def main(args: list):
             key = cv2.waitKey(1) & 0xFF
             if key == ord('q'):
                 break
+    else:
+        logging.critical("Something went wrong")
 
     print(f"buckets:{counter.loglog}\nestimated face seen: {counter.estimate()}")
 
 
 def process_frame(counter, frame, show_images):
-    # ptime = time.time()
+    ptime = time.time()
 
     counter.add_faces(frame=frame)
 
     if show_images:
         # add fps to image
-        # ctime = time.time()
-        # fps = 1 / (ctime - ptime)
-        #
-        # cv2.putText(frame, f"FPS: {fps:,.1f}", (20, 70), cv2.FONT_HERSHEY_PLAIN,
-        #             3, (255, 0, 0), 3)
+        ctime = time.time()
+        fps = 1 / (ctime - ptime)
+
+        cv2.putText(frame, f"FPS: {fps:,.1f}", (20, 70), cv2.FONT_HERSHEY_PLAIN,
+                    3, (255, 0, 0), 3)
 
         cv2.imshow("frame", frame)
 
@@ -165,7 +171,7 @@ def process_frame(counter, frame, show_images):
 def usage():
     print("This program is used for counting unique faces in frames.\n"
           "It uses the Hyperloglog algorithm and a face vectorization algorithm to"
-          "count them.\n\n"
+          "count them. press 'e' to get estimated count and 'q' to exit.\n\n"
           "You can use this flags:"
           "use '-q' or '--quiet' to hide the frames. \n"
           "use '-c' or '--camera' to use camera instead.\n"
@@ -175,11 +181,11 @@ def usage():
 
 def handle_flags():
     args = sys.argv[1:]
-    show_images, use_camera, output_help, debug = (True, False, False, False)
+    show_images, use_camera, output_help, debug, init = (True, False, False, False, False)
     for flag in args:
         if flag not in FLAGS:
-            print(f"Unrecognized flag {flag}\n\n")
-            return None
+            logging.warn(f"Unrecognized flag {flag}\n\n")
+            continue
 
         if flag in ["-q", "--quiet"]:
             show_images = False
@@ -189,18 +195,21 @@ def handle_flags():
             output_help = True
         elif flag in ["-d", "--debug"]:
             debug = True
+        elif flag in ["-i", "--init"]:
+            init = True
 
-    return show_images, use_camera, debug, output_help
+    return show_images, use_camera, debug, init, output_help
 
 
 if __name__ == '__main__':
-    # # check all needed files are installed
-    # initiate()
     # run the program
     flags = handle_flags()
-    if flags and not flags[-1]:
-        logging.basicConfig(level=logging.DEBUG if flags[-2] else logging.WARNING,
+    if not flags[-1]:
+        logging.basicConfig(level=logging.DEBUG if flags[2] else logging.WARNING,
                             format="%(levelname)%s %(asctime)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]")
+        if flags[3]:
+            initiate()
+
         main(flags[:2])
     else:
         usage()

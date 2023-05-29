@@ -4,7 +4,6 @@ import logging
 
 PORT = 5440
 
-
 MAX_LENLEN = 20
 RECV_INTERVAL = 4096
 

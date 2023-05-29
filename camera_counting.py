@@ -138,7 +138,7 @@ def main(args: list):
                 print(f"buckets:{counter.loglog}\nestimated face seen: {counter.estimate()}")
         # After the loop release the cap object
         cam.release()
-    elif dir_path is not None and dir_path is not "":
+    elif dir_path != None and dir_path != "":
         for path in os.listdir(dir_path):
             frame = cv2.imread(f"{dir_path}\\{path}")
             process_frame(counter, frame, show_images)
@@ -206,7 +206,7 @@ if __name__ == '__main__':
     flags = handle_flags()
     if not flags[-1]:
         logging.basicConfig(level=logging.DEBUG if flags[2] else logging.WARNING,
-                            format="%(levelname)%s %(asctime)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]")
+                            format="%(levelname)s %(asctime)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]")
         if flags[3]:
             initiate()
 

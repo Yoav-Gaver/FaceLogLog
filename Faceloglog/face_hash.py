@@ -172,7 +172,7 @@ def get_features_mean(images_dir: str) -> list:
     face_hasher = FaceHasher(show_images=False)
 
     for path in os.listdir(images_dir):
-        frame = cv2.imread(f"images\\10\\{path}")
+        frame = cv2.imread(f"{images_dir}{path}")
         vectors = face_hasher.get_faces_vectors(frame=frame, do_round=False)
 
         cv2.imshow("frame", frame)

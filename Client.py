@@ -81,6 +81,6 @@ def main():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
-                        format="%(levelname)s %(asctimes: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]")
+                        format="%(levelname)s %(asctimes)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]")
     main()
 

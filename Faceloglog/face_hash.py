@@ -140,7 +140,7 @@ class FaceHasher:
         return i
 
     @staticmethod
-    def extract_features(image: np.ndarray) -> (np.ndarray[float], list[list[int]]):
+    def extract_features(image: np.ndarray) -> tuple[np.ndarray[float], list[list[int]]]:
         """
         extract a vector from an image of a face
 
@@ -235,3 +235,4 @@ def main():
 if __name__ == '__main__':
     main()
     cv2.destroyAllWindows()
+    

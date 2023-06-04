@@ -118,12 +118,14 @@ def main(args: list):
     except KeyboardInterrupt:
         logging.critical("program ended through user interruption")
         return
-
+    if not lg_buckets.isnumeric():
+        logging.critical("inputted string must be an integer")
+        return
     counter = FaceCounter(lg_num_buckets=int(lg_buckets), show_images=show_images)
 
     if use_camera:
         cam = cv2.VideoCapture(0)
-        while not msvcrt.kbhit() or msvcrt.getch() != b'q':
+        while True:
             _, frame = cam.read()
 
             process_frame(counter, frame, show_images)
@@ -131,14 +133,23 @@ def main(args: list):
             if frame is None:
                 logging.critical("image empty check source")
                 break
+            
             key = cv2.waitKey(1) & 0xFF
-            if key == ord('q'):
-                break
-            elif key == ord('e'):
-                print(f"buckets:{counter.loglog}\nestimated face seen: {counter.estimate()}")
+            if key != 0:
+                if key == ord('q'):
+                    break
+                if key == ord('e'):
+                    print(f"buckets:{counter.loglog}\nestimated face seen: {counter.estimate()}")
+
+            if msvcrt.kbhit():
+                if msvcrt.getch() == b'q':
+                    break
+                if msvcrt.getch() == b'e':
+                    print(f"buckets:{counter.loglog}\nestimated face seen: {counter.estimate()}")
+
         # After the loop release the cap object
         cam.release()
-    elif dir_path != None and dir_path != "":
+    elif dir_path:
         for path in os.listdir(dir_path):
             frame = cv2.imread(f"{dir_path}\\{path}")
             process_frame(counter, frame, show_images)

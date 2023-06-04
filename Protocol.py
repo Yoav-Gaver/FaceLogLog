@@ -39,7 +39,10 @@ def recv(sock):
     Returns:
         the decodes vector
     """
-    length_bytes = sock.recv(MAX_LENLEN)  # get length of vector
+    try:
+        length_bytes = sock.recv(MAX_LENLEN)  # get length of vector
+    except:
+        return None
     length = int(length_bytes.decode())  # decode length of vector
     message = b""
     while length > 0:

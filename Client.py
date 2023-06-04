@@ -54,11 +54,11 @@ class Client:
 
     def connect_server(self):
         """connect socket to server and get public key"""
-        logging.info("Creating socket")
+        logging.debug("Creating socket")
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        logging.info("Contenting to server")
+        logging.debug("Contenting to server")
         self.socket.connect(self.address)
-        logging.info("Connected")
+        logging.debug("Connected")
 
     def send_vectors(self, vectors):
         """
@@ -72,15 +72,15 @@ class Client:
 
 
 def main():
-    if len(sys.argv) > 2:
-        client = Client(address=(sys.argv[2], Protocol.PORT))
+    if len(sys.argv) == 2:
+        client = Client(address=(sys.argv[1], Protocol.PORT))
     else:
         client = Client()
     client.run()
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG,
-                        format="%(levelname)s %(asctimes)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]")
+    logging.basicConfig(level=logging.INFO,
+                        format="%(levelname)s %(asctime)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]")
     main()
 

@@ -26,22 +26,22 @@ class Server:
         """
         self.initiate_server()
 
-        logging.info("Press 'e' to get estimate of how many people were seen by all cameras.\n"
+        print("Press 'e' to get estimate of how many people were seen by all cameras.\n"
                      "Hold 'q' to end server program.")
 
-        while not msvcrt.kbhit() or msvcrt.getch() != b"q":
-            logging.debug("getting data")
+        while True: 
             rlist, _, xlist = select.select([self.server_socket] + self.client_sockets, self.client_sockets, [], 1)
 
-            logging.debug("receiving data")
             data = self.receive_all(rlist)
 
             if len(data):
-                logging.debug("processing...")
                 self.process_data(data)
 
-            if msvcrt.kbhit() and msvcrt.getch() == b'e':
-                print(f"current estimate of overall people seen is {self.estimate()}")
+            if msvcrt.kbhit():
+                if msvcrt.getch() == b'q':
+                    break
+                if msvcrt.getch() == b'e':
+                    print(f"estimated face seen: {self.estimate()}")
 
         print(f"current estimate of overall people seen is {self.estimate()}")
         logging.debug("closing")
@@ -58,6 +58,7 @@ class Server:
                 if vector is None:
                     try:
                         self.client_sockets.remove(current_socket)
+                        logging.debug("client socket removed")
                     except ValueError:
                         logging.debug(f"Connection already disconnected: {current_socket}\n")
                 else:
@@ -86,7 +87,12 @@ class Server:
 
 
 def main():
-    lg_buckets = input("how many buckets would you like there to be in the counter? input in log 2 form")
+    try:
+        lg_buckets = input("What would you like the lg of number of buckets to be?(2=>4, 3=>8,...,10=>1024,...)\n")
+    except KeyboardInterrupt:
+        logging.critical("program ended through user interruption")
+        return
+
     if not lg_buckets.isnumeric():
         logging.critical("inputted string must be an integer")
         return
@@ -95,7 +101,7 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO,
+    logging.basicConfig(level=logging.DEBUG,
                         format="%(levelname)s %(asctime)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]",
                         datefmt="%H:%M:%S")
     main()

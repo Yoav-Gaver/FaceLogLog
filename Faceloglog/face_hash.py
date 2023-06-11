@@ -3,6 +3,7 @@ import numpy as np
 import face_recognition
 import time
 import os
+import logging
 
 features_fix = np.array(
     [-0.09751934558153152, 0.09638582170009613, 0.05810072273015976, -0.05779742822051048, -0.11873337626457214,
@@ -154,6 +155,7 @@ class FaceHasher:
 
         # Load the face recognition model to extract features of all faces in the frame
         model = face_recognition.face_encodings(image, face_locations)
+
 
         # Process the face features (replace this with your own processing logic)
         processed_features = np.mean(model, axis=0)

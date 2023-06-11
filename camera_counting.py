@@ -1,6 +1,7 @@
 import time
 import sys
 import os
+from tqdm import tqdm
 import cv2
 import urllib.request as urlreq
 import numpy as np
@@ -98,8 +99,8 @@ class FaceCounter:
         zeros = FaceHasher.leading_zeros(v, self.lg_num_bucket)
         bucket_ind = self.get_bucket_ind(v)
         if ind:
-            print(f"face number {ind}: {v}")
-        print(f"zeros: {zeros}, to bucket: {bucket_ind}")
+            logging.debug(f"face number {ind}: {v}")
+        logging.debug(f"zeros: {zeros}, to bucket: {bucket_ind}")
         self.loglog.add_by_zeros(zeros=zeros, bucket_ind=bucket_ind)
 
     def estimate(self, correction_m: int = 1, use_hyper: bool = False):
@@ -139,18 +140,18 @@ def main(args: list):
                 if key == ord('q'):
                     break
                 if key == ord('e'):
-                    print(f"buckets:{counter.loglog}\nestimated face seen: {counter.estimate()}")
+                    print(f"buckets:{counter.loglog}\nestimated number of unique faces seen: {counter.estimate()}")
 
             if msvcrt.kbhit():
                 if msvcrt.getch() == b'q':
                     break
                 if msvcrt.getch() == b'e':
-                    print(f"buckets:{counter.loglog}\nestimated face seen: {counter.estimate()}")
+                    print(f"buckets:{counter.loglog}\nestimated number of unique faces seen: {counter.estimate()}")
 
         # After the loop release the cap object
         cam.release()
     elif dir_path:
-        for path in os.listdir(dir_path):
+        for path in tqdm(os.listdir(dir_path)):
             frame = cv2.imread(f"{dir_path}\\{path}")
             process_frame(counter, frame, show_images)
 
@@ -198,15 +199,15 @@ def handle_flags():
             logging.warn(f"Unrecognized flag {flag}\n\n")
             continue
 
-        if flag in ["-q", "--quiet"]:
+        if flag in ["-q", "--quiet"]:  # quiet mode
             show_images = False
-        elif flag in ["-c", "--camera"]:
+        elif flag in ["-c", "--camera"]:  # use the camera instid of folder
             use_camera = True
-        elif flag in ["-h", "--help"]:
+        elif flag in ["-h", "--help"]:  # print help
             output_help = True
-        elif flag in ["-d", "--debug"]:
+        elif flag in ["-d", "--debug"]:  # debug mode
             debug = True
-        elif flag in ["-i", "--init"]:
+        elif flag in ["-i", "--init"]:  # initialize needed files
             init = True
 
     return show_images, use_camera, debug, init, output_help
@@ -216,7 +217,7 @@ if __name__ == '__main__':
     # run the program
     flags = handle_flags()
     if not flags[-1]:
-        logging.basicConfig(level=logging.DEBUG if flags[2] else logging.WARNING,
+        logging.basicConfig(level=logging.DEBUG if flags[2] else logging.INFO,
                             format="%(levelname)s %(asctime)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]")
         if flags[3]:
             initiate()

@@ -43,7 +43,7 @@ class Server:
                 if msvcrt.getch() == b'e':
                     print(f"estimated face seen: {self.estimate()}")
 
-        print(f"current estimate of overall people seen is {self.estimate()}")
+        print(f"current estimate of unique faces seen is {self.estimate()}")
         logging.debug("closing")
         self.server_socket.close()
 

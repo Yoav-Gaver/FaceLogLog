@@ -9,7 +9,8 @@ RECV_INTERVAL = 4096
 
 
 def send(sock, vector):
-    """Sends a message over the given socket.
+    """
+    Sends a message over the given socket.
 
     Args:
         sock (socket.socket):
@@ -30,7 +31,8 @@ def exit_socket(sock):
 
 
 def recv(sock):
-    """Receives a message over the given socket.
+    """
+    Receives a message over the given socket.
 
     Args:
         sock (socket.socket):

@@ -1,3 +1,8 @@
+"""
+This script is used to accurately count the number of unique faces in the 
+directory.
+"""
+
 import os
 import cv2
 from tqdm import tqdm
@@ -26,9 +31,8 @@ def count_unique_faces(dir, image_paths, tolerance=0.6):
     return unique_faces_count
 
 def main():
-    image_paths = os.listdir(dir:="images\\10")
+    image_paths = os.listdir(dir:="images\\good_images")
     
-
     unique_faces = count_unique_faces(dir,image_paths, 0.4)
     print(f"Number of unique faces in the images: {unique_faces}")
 

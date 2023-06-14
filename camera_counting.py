@@ -90,6 +90,8 @@ class FaceCounter:
             frame (np.ndarray): the frame with the faces
         """
         vectors = self.face_vectorizer.get_faces_vectors(frame=frame)
+        for v in vectors:
+            logging.debug(v)
 
         for ind, v in enumerate(vectors):
             self.add_vector(v, ind)

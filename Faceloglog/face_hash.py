@@ -3,6 +3,7 @@ import numpy as np
 import face_recognition
 import time
 import os
+import urllib.request as urlreq
 import logging
 
 features_fix = np.array(
@@ -32,6 +33,23 @@ features_fix = np.array(
      0.156102254986763, 0.016840791329741478, 0.13849034905433655, 0.054719217121601105, 0.06392785906791687,
      0.0036133285611867905, -0.0367475263774395, -0.1335757076740265, -0.0971313938498497, 0.03243446350097656,
      -0.03219699487090111, 0.02559298276901245, 0.039289142936468124])
+
+# save face detection algorithm's url in haarcascade_url variable
+haarcascade_url = \
+    "https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_alt2.xml"
+
+# save face detection algorithm's name as haarcascade
+haarcascade = "models/opencv/haarcascade_frontalface_alt2.xml"
+
+
+def initiate():
+    # check if file is in needed directory
+    if haarcascade in os.listdir(os.curdir):
+        print("Haarcascade model exists")
+    else:
+        # download file from url and save locally as haarcascade_frontalface_alt2.xml, < 1MB
+        urlreq.urlretrieve(haarcascade_url, haarcascade)
+        print("Haarcascade model downloaded")
 
 
 class FaceHasher:
@@ -66,7 +84,7 @@ class FaceHasher:
         vectors = []
         # get vector of all faces
         for ind, face in enumerate(faces):
-            v = self.get_face_vector(face, ind + 1,do_round=do_round)
+            v = self.get_face_vector(face, ind + 1, do_round=do_round)
             if v is not None:
                 vectors.append(v)
 
@@ -141,7 +159,7 @@ class FaceHasher:
         return i
 
     @staticmethod
-    def extract_features(image: np.ndarray) -> tuple[np.ndarray[float], list[list[int]]]:
+    def extract_features(image: np.ndarray) -> tuple[np.ndarray[float], list[list[int]]] | tuple[None, None]:
         """
         extract a vector from an image of a face
 
@@ -156,7 +174,6 @@ class FaceHasher:
         # Load the face recognition model to extract features of all faces in the frame
         model = face_recognition.face_encodings(image, face_locations)
 
-
         # Process the face features (replace this with your own processing logic)
         processed_features = np.mean(model, axis=0)
 
@@ -168,7 +185,7 @@ def get_features_mean(images_dir: str) -> list:
     """
     get the median vector of faces from a folder full of pictures
 
-    :param images_dir: directery location
+    :param images_dir: directory location
     """
     features = []
     face_hasher = FaceHasher(show_images=False)
@@ -189,21 +206,20 @@ def get_features_mean(images_dir: str) -> list:
 
     median = []
     for ind in range(len(features[0])):
-        l = []
+        vectors_list_col = []
         for feature in features:
-            l.append(feature[ind])
-        median.append(sorted(l)[len(l) // 2])
+            vectors_list_col.append(feature[ind])
+        median.append(sorted(vectors_list_col)[len(vectors_list_col) // 2])
 
     print(median)
+    return median
 
 
 def main():
     cam = cv2.VideoCapture(0)
     face_vectorized = FaceHasher()
-
     ptime = time.time()
 
-    max_zeros = 0
     while True:
         _, frame = cam.read()
 
@@ -237,4 +253,3 @@ def main():
 if __name__ == '__main__':
     main()
     cv2.destroyAllWindows()
-    

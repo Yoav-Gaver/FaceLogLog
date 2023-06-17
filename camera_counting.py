@@ -3,46 +3,15 @@ import sys
 import os
 from tqdm import tqdm
 import cv2
-import urllib.request as urlreq
 import numpy as np
-from Faceloglog.face_hash import FaceHasher
-from Faceloglog.hash_functions import LogLog
+from Faceloglog import FaceHasher, LogLog, initiate
 import logging
 import msvcrt
 
 
-# save face detection algorithm's url in haarcascade_url variable
-haarcascade_url = "https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_alt2.xml"
-
-# save face detection algorithm's name as haarcascade
-haarcascade = "models/opencv/haarcascade_frontalface_alt2.xml"
-
-# # save facial landmark detection model's url in LBFmodel_url variable
-# LBFmodel_url = "https://github.com/kurnianggoro/GSOC2017/raw/master/data/lbfmodel.yaml"
-#
-# # save facial landmark detection model's name as LBFmodel
-# LBFmodel = "models/opencv/lbfmodel.yaml"
-
 # Flags for the program
 FLAGS = ["-q", "--quiet", "-c", "--camera", "-h", "--help", "-d", "--debug", "-i", "--init"]
 
-
-def initiate():
-    # check if file is in needed directory
-    if haarcascade in os.listdir(os.curdir):
-        print("Haarcascade model exists")
-    else:
-        # download file from url and save locally as haarcascade_frontalface_alt2.xml, < 1MB
-        urlreq.urlretrieve(haarcascade_url, haarcascade)
-        print("Haarcascade model downloaded")
-    #
-    # # check if file is in needed directory
-    # if LBFmodel in os.listdir(os.curdir):
-    #     print("LBF model exists")
-    # else:
-    #     # download picture from url and save locally as lbfmodel.yaml, < 54MB
-    #     urlreq.urlretrieve(LBFmodel_url, LBFmodel)
-    #     print("LBF model downloaded")
 
 
 class FaceCounter:
@@ -116,60 +85,112 @@ def main(args: list):
 
     try:
         lg_buckets = input("What would you like the lg of number of buckets to be?(2=>4, 3=>8,...,10=>1024,...)\n")
+        lg_buckets = int(lg_buckets)
+
         if not use_camera:
             dir_path = input("what path is the images in?")
     except KeyboardInterrupt:
         logging.critical("program ended through user interruption")
         return
-    if not lg_buckets.isnumeric():
+    except ValueError:
         logging.critical("inputted string must be an integer")
         return
-    counter = FaceCounter(lg_num_buckets=int(lg_buckets), show_images=show_images)
+
+    main_counter = FaceCounter(lg_num_buckets=lg_buckets, show_images=show_images)
+
+    lglg = int(np.ceil(np.log2(lg_buckets)))
+    counter_array = []
+    for i in range(lg_buckets - lglg, lg_buckets + lglg + 1):
+        if i != lg_buckets:
+            counter_array.append(FaceCounter(lg_num_buckets=i, show_images=show_images))
+            logging.info(f"added a counter with 2^{i} buckets")
+    logging.debug(f"counter array length{len(counter_array)}")
 
     if use_camera:
         cam = cv2.VideoCapture(0)
         while True:
             _, frame = cam.read()
 
-            process_frame(counter, frame, show_images)
+            process_frame(main_counter=main_counter, frame=frame,
+                          show_images=show_images, counter_array=counter_array)
 
             if frame is None:
                 logging.critical("image empty check source")
                 break
-            
+
             key = cv2.waitKey(1) & 0xFF
             if key != 0:
                 if key == ord('q'):
                     break
                 if key == ord('e'):
-                    print(f"buckets:{counter.loglog}\nestimated number of unique faces seen: {counter.estimate()}")
+                    print_counter(main_counter=main_counter, counter_array=counter_array)
 
             if msvcrt.kbhit():
                 if msvcrt.getch() == b'q':
                     break
                 if msvcrt.getch() == b'e':
-                    print(f"buckets:{counter.loglog}\nestimated number of unique faces seen: {counter.estimate()}")
-
+                    print_counter(main_counter=main_counter, counter_array=counter_array)
         # After the loop release the cap object
         cam.release()
     elif dir_path:
         for path in tqdm(os.listdir(dir_path)):
             frame = cv2.imread(f"{dir_path}\\{path}")
-            process_frame(counter, frame, show_images)
+            process_frame(main_counter, frame, show_images, counter_array=counter_array)
 
             key = cv2.waitKey(1) & 0xFF
             if key == ord('q'):
                 break
+
+            if msvcrt.kbhit():
+                if msvcrt.getch() == b'q':
+                    break
     else:
         logging.critical("Something went wrong")
 
-    print(f"buckets:{counter.loglog}\nestimated face seen: {counter.estimate()}")
+    print_counter(main_counter=main_counter, counter_array=counter_array)
 
 
-def process_frame(counter, frame, show_images):
+def print_counter(main_counter, counter_array=None):
+    """
+    print the counter information for all buckets and different counters
+
+    Args:
+        main_counter (FaceCounter): the main counter
+        counter_array (list): a list of counters with different buckets
+    """
+    print(f"\n\nmain counter:\nbuckets:{main_counter.loglog}\nestimated face seen: {main_counter.estimate()}")
+
+    bucket_numbers = []
+    estimates = []
+    for counter in counter_array:
+        bucket_numbers.append(counter.lg_num_bucket)
+        estimates.append(counter.estimate())
+
+    print(f"\nnear counter:\n"
+          f"estimates of different counters of different bucket numbers {estimates}"
+          f"\nlg of the bucket numbers of the counters are {bucket_numbers}"
+          f"\naverage of all estimates {np.average(estimates)}")
+
+
+def process_frame(main_counter, frame, show_images, counter_array=None):
+    """
+    Process a frame and add it to the counters.
+
+    Args:
+        main_counter (FaceCounter): the main counter
+        frame (np.ndarray): the frame to process
+        show_images (bool): whether to show images
+        counter_array (list): a list of counters with different buckets
+
+    """
     ptime = time.time()
 
-    counter.add_faces(frame=frame)
+    faces = main_counter.add_faces(frame=frame)
+
+    if counter_array:
+        for face in faces:
+            for counter in counter_array:
+                counter.add_vector(face)
 
     if show_images:
         # add fps to image
@@ -203,7 +224,7 @@ def handle_flags():
 
         if flag in ["-q", "--quiet"]:  # quiet mode
             show_images = False
-        elif flag in ["-c", "--camera"]:  # use the camera instid of folder
+        elif flag in ["-c", "--camera"]:  # use the camera instead of folder
             use_camera = True
         elif flag in ["-h", "--help"]:  # print help
             output_help = True

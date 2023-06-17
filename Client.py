@@ -1,6 +1,6 @@
 import sys
 import socket
-from Faceloglog.face_hash import FaceHasher
+from Faceloglog import FaceHasher
 import logging
 import Protocol
 import cv2
@@ -26,7 +26,6 @@ class Client:
         self.cam = cv2.VideoCapture(video_capture)
         self.socket: socket.socket | None = None
 
-
     def run(self):
         """run the client and send vectors to server"""
         self.connect_server()
@@ -41,7 +40,7 @@ class Client:
                 try:
                     logging.debug(vectors)
                     self.send_vectors(vectors)
-                except ConnectionAbortedError as e:
+                except ConnectionAbortedError:
                     logging.warning("Connection was forcefully closed by server. Exiting program...")
                     self.socket.close()
                     return
@@ -83,4 +82,3 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
                         format="%(levelname)s %(asctime)s: %(message)s [%(module)s, %(funcName)s(%(lineno)d)]")
     main()
-

@@ -4,7 +4,7 @@ import logging
 import Protocol
 import threading
 import msvcrt
-import camera_counting
+from camera_counting import FaceCounter
 
 
 class Server:
@@ -14,7 +14,7 @@ class Server:
             lg_num_buckets (int): the lg of the buckets that keep count(buckets=2^lg_num_buckets)
             port (int): the port the server will connect to
         """
-        self.counter = camera_counting.FaceCounter(lg_num_buckets=lg_num_buckets)
+        self.counter = FaceCounter(lg_num_buckets=lg_num_buckets)
         self.address = ("127.0.0.1", port)
         self.server_socket = None
         self.client_sockets = []
@@ -27,9 +27,9 @@ class Server:
         self.initiate_server()
 
         print("Press 'e' to get estimate of how many people were seen by all cameras.\n"
-                     "Hold 'q' to end server program.")
+              "Hold 'q' to end server program.")
 
-        while True: 
+        while True:
             rlist, _, xlist = select.select([self.server_socket] + self.client_sockets, self.client_sockets, [], 1)
 
             data = self.receive_all(rlist)

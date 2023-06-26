@@ -66,7 +66,6 @@ class FaceHasher:
         self.face_size = face_size
         self.show_images = show_images
 
-    # TODO: add max faces to scan per frame
     def get_faces_vectors(self, frame: np.ndarray, do_round: bool = True):
         """
         create and return a vector for each face in the frame

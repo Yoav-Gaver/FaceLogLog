@@ -12,7 +12,7 @@ import msvcrt
 # Flags for the program
 FLAGS = ["-q", "--quiet", "-c", "--camera", "-h", "--help", "-d", "--debug", "-i", "--init"]
 
-
+FORMATS = ["png", "jpg", "jpeg"]
 
 class FaceCounter:
     def __init__(self, lg_num_buckets=5, model="models/opencv/haarcascade_frontalface_alt2.xml",
@@ -134,8 +134,9 @@ def main(args: list):
         cam.release()
     elif dir_path:
         for path in tqdm(os.listdir(dir_path)):
-            frame = cv2.imread(f"{dir_path}\\{path}")
-            process_frame(main_counter, frame, show_images, counter_array=counter_array)
+            if path.split(".")[-1].lower() in FORMATS:
+                frame = cv2.imread(f"{dir_path}\\{path}")
+                process_frame(main_counter, frame, show_images, counter_array=counter_array)
 
             key = cv2.waitKey(1) & 0xFF
             if key == ord('q'):
